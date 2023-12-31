@@ -1,0 +1,48 @@
+name: Aws CI CD
+
+on: 
+
+  push:
+    branches:
+      - main
+
+jobs:
+  
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+         - uses: actions/checkout@v2
+
+         - name: Setup python
+           uses: actions/setup-python@v2
+           with: 
+              python-version: 3.12
+        
+         - name: Install VirtualEnv
+           run: pip install VirtualEnv
+
+         - name: Virtual Env  
+           uses: actions/cache@v2
+           id: cache-venv
+           with:
+               path: venv
+               key: ${{runner.os}}-venv-${{ hashFiles('**/requirements**.txt')}}
+               
+               retore-keys: /
+         - name: Activate venv
+           run: python -m venv abox && source abox/bin/activate && pip install -r requirements.txt
+
+         - name: Run Tests
+           run: . abox/bin/activate && pytest
+
+         - name: Archive dependency
+           run: /
+             cd ./venv/lib/python3.12/site-packages
+             zip -r9 ../../../../api.zip
+         - name: Add API files to zip
+           run: cd ./api && zip -g ../api.zip -r .
+         - name: Upload artifact
+           uses: actions/upload-artifact@v2
+           with: 
+              name: api
+              path: api.zip
